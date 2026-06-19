@@ -1,0 +1,62 @@
+=========================
+DAILY INPUT TEMPLATE
+=========================
+Copy this each session. Fill in all fields before submitting.
+
+
+DATE:
+
+Day:
+
+Market: NASDAQ
+
+
+------------------------
+NEWS EVENT
+------------------------
+
+News Name:
+
+Release Time:
+
+Impact: Red / Orange / Yellow
+
+Previous:
+
+Forecast:
+
+Actual:
+
+
+------------------------
+MARKET REACTION DATA
+------------------------
+
+Nasdaq Futures Movement (before 9:30 open):
++/- _____ points
+
+9:30 AM EST Open Price:
+_____
+
+10:00 AM EST Price:
+_____
+
+9:30 - 10:00 Movement:
+_____ points
+
+Direction:
+Up / Down
+
+Premarket High:
+_____
+
+Premarket Low:
+_____
+
+
+------------------------
+OPTIONAL NOTES
+------------------------
+
+(Add any extra context: earnings, geopolitical events, Fed speakers, etc.)
+
