@@ -1,472 +1,871 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NQ Analyst — Nasdaq Pre-Market Report</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font-sans); }
-.app { padding: 1.5rem 0; max-width: 680px; }
-.header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
-.header-icon { width: 36px; height: 36px; background: #1D9E75; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-.header-title { font-size: 18px; font-weight: 500; color: var(--color-text-primary); }
-.header-sub { font-size: 13px; color: var(--color-text-secondary); }
-.section-label { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
-.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
-.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
-.field-group { display: flex; flex-direction: column; gap: 4px; }
-.field-label { font-size: 12px; color: var(--color-text-secondary); }
-input, select, textarea { width: 100%; padding: 8px 10px; font-size: 14px; font-family: var(--font-sans); background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); color: var(--color-text-primary); outline: none; }
-input:focus, select:focus { border-color: #1D9E75; box-shadow: 0 0 0 2px rgba(29,158,117,0.15); }
-.impact-row { display: flex; gap: 8px; }
-.impact-btn { flex: 1; padding: 8px; font-size: 13px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); color: var(--color-text-secondary); cursor: pointer; transition: all 0.15s; text-align: center; }
-.impact-btn.active-red { background: #FCEBEB; border-color: #E24B4A; color: #791F1F; font-weight: 500; }
-.impact-btn.active-orange { background: #FAEEDA; border-color: #EF9F27; color: #633806; font-weight: 500; }
-.impact-btn.active-yellow { background: #FAEEDA; border-color: #FAC775; color: #854F0B; font-weight: 500; }
-.dir-row { display: flex; gap: 8px; }
-.dir-btn { flex: 1; padding: 8px; font-size: 13px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); color: var(--color-text-secondary); cursor: pointer; text-align: center; }
-.dir-btn.active-up { background: #EAF3DE; border-color: #639922; color: #27500A; font-weight: 500; }
-.dir-btn.active-down { background: #FCEBEB; border-color: #E24B4A; color: #791F1F; font-weight: 500; }
-.analyze-btn { width: 100%; padding: 12px; font-size: 15px; font-family: var(--font-sans); background: #1D9E75; color: #fff; border: none; border-radius: var(--border-radius-md); cursor: pointer; font-weight: 500; margin-top: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.analyze-btn:hover { background: #0F6E56; }
-.analyze-btn:disabled { background: var(--color-background-secondary); color: var(--color-text-secondary); cursor: not-allowed; border: 0.5px solid var(--color-border-tertiary); }
-.report-area { display: none; }
-.report-area.visible { display: block; }
-.divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 1rem 0; }
-.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; }
-.badge-green { background: #EAF3DE; color: #27500A; }
-.badge-red { background: #FCEBEB; color: #791F1F; }
-.badge-amber { background: #FAEEDA; color: #633806; }
-.badge-gray { background: var(--color-background-secondary); color: var(--color-text-secondary); }
-.badge-blue { background: #E6F1FB; color: #0C447C; }
-.badge-teal { background: #E1F5EE; color: #085041; }
-.metric-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 13.5px; }
-.metric-row:last-child { border-bottom: none; }
-.metric-key { color: var(--color-text-secondary); }
-.metric-val { font-weight: 500; color: var(--color-text-primary); }
-.final-box { border-radius: var(--border-radius-lg); padding: 1.25rem; margin-top: 0.5rem; }
-.final-trade { background: #E1F5EE; border: 1.5px solid #1D9E75; }
-.final-avoid { background: #FCEBEB; border: 1.5px solid #E24B4A; }
-.final-decision { font-size: 20px; font-weight: 500; }
-.final-trade .final-decision { color: #0F6E56; }
-.final-avoid .final-decision { color: #791F1F; }
-.final-reason { font-size: 13px; margin-top: 6px; line-height: 1.6; }
-.final-trade .final-reason { color: #085041; }
-.final-avoid .final-reason { color: #A32D2D; }
-.section-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-.loader { display: none; text-align: center; padding: 2rem; color: var(--color-text-secondary); font-size: 14px; }
-.loader.active { display: block; }
-.dot-anim::after { content: ''; animation: dots 1.2s steps(4,end) infinite; }
-@keyframes dots { 0%,20%{content:'.'}40%,60%{content:'..'}80%,100%{content:'...'} }
-.risk-bar-wrap { margin: 6px 0 2px; }
-.risk-bar-bg { height: 6px; background: var(--color-background-secondary); border-radius: 4px; overflow: hidden; }
-.risk-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
-.chain-list { display: flex; flex-direction: column; gap: 4px; }
-.chain-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-text-primary); }
-.chain-arrow { color: var(--color-text-secondary); font-size: 11px; }
-.no-trade-banner { background: #FAEEDA; border: 0.5px solid #EF9F27; border-radius: var(--border-radius-md); padding: 10px 14px; margin-bottom: 10px; font-size: 13px; color: #633806; display: none; }
-.no-trade-banner.visible { display: block; }
-.section-num { width: 20px; height: 20px; border-radius: 50%; background: var(--color-background-secondary); display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--color-text-secondary); flex-shrink: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --bg2: #13161e;
+    --bg3: #1a1d28;
+    --bg4: #20243a;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8eaf0;
+    --text2: #8b90a8;
+    --text3: #555a74;
+    --green: #00c896;
+    --green-bg: rgba(0,200,150,0.1);
+    --green-border: rgba(0,200,150,0.3);
+    --red: #ff5a5a;
+    --red-bg: rgba(255,90,90,0.1);
+    --red-border: rgba(255,90,90,0.3);
+    --amber: #f5a623;
+    --amber-bg: rgba(245,166,35,0.1);
+    --amber-border: rgba(245,166,35,0.3);
+    --blue: #4a9eff;
+    --blue-bg: rgba(74,158,255,0.1);
+    --blue-border: rgba(74,158,255,0.3);
+    --purple: #a78bfa;
+    --accent: #00c896;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .topbar {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #00c896, #0097b2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; color: #fff;
+  }
+  .logo-text { font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+  .logo-sub { font-size: 12px; color: var(--text3); margin-left: 4px; }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .live-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title i { font-size: 13px; color: var(--accent); }
+
+  /* ── GRID ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  @media (max-width: 600px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 400px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  }
+
+  /* ── FORM ELEMENTS ── */
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; font-weight: 500; }
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  select {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    font-size: 13.5px;
+    color: var(--text);
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,200,150,0.1); }
+  select option { background: var(--bg3); }
+
+  /* ── TOGGLE BUTTONS ── */
+  .toggle-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .toggle-btn {
+    flex: 1;
+    padding: 9px 10px;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    background: var(--bg3);
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 13px;
+    text-align: center;
+    transition: all 0.15s;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .toggle-btn:hover { border-color: var(--border2); background: var(--bg4); }
+  .active-red    { background: var(--red-bg) !important;   border-color: var(--red) !important;   color: var(--red) !important;   font-weight: 600; }
+  .active-orange { background: var(--amber-bg) !important; border-color: var(--amber) !important; color: var(--amber) !important; font-weight: 600; }
+  .active-yellow { background: rgba(255,220,80,0.1) !important; border-color: #ffd050 !important; color: #ffd050 !important; font-weight: 600; }
+  .active-up     { background: var(--green-bg) !important; border-color: var(--green) !important; color: var(--green) !important; font-weight: 600; }
+  .active-down   { background: var(--red-bg) !important;   border-color: var(--red) !important;   color: var(--red) !important;   font-weight: 600; }
+
+  /* ── SUBMIT BUTTON ── */
+  .btn-analyze {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #00c896, #0097b2);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-top: 4px;
+    font-family: inherit;
+  }
+  .btn-analyze:hover { opacity: 0.9; }
+  .btn-analyze:active { transform: scale(0.99); }
+  .btn-analyze:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-reset {
+    width: 100%;
+    padding: 11px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.15s;
+    font-family: inherit;
+  }
+  .btn-reset:hover { background: var(--bg3); }
+
+  /* ── LOADER ── */
+  .loader {
+    display: none;
+    text-align: center;
+    padding: 30px;
+    color: var(--text3);
+  }
+  .loader.active { display: block; }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── REPORT ── */
+  .report { display: none; }
+  .report.visible { display: block; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+  .report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .report-title { font-size: 20px; font-weight: 700; color: var(--text); }
+  .report-meta { font-size: 12px; color: var(--text3); }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .badge-green  { background: var(--green-bg);  color: var(--green);  border: 1px solid var(--green-border); }
+  .badge-red    { background: var(--red-bg);    color: var(--red);    border: 1px solid var(--red-border); }
+  .badge-amber  { background: var(--amber-bg);  color: var(--amber);  border: 1px solid var(--amber-border); }
+  .badge-blue   { background: var(--blue-bg);   color: var(--blue);   border: 1px solid var(--blue-border); }
+  .badge-gray   { background: var(--bg3);       color: var(--text2);  border: 1px solid var(--border2); }
+  .badge-purple { background: rgba(167,139,250,0.1); color: var(--purple); border: 1px solid rgba(167,139,250,0.3); }
+
+  /* ── METRIC CARDS ── */
+  .metric-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    text-align: center;
+  }
+  .metric-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .metric-value { font-size: 22px; font-weight: 700; color: var(--text); line-height: 1.2; }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+  /* ── CHAIN ── */
+  .chain { display: flex; flex-direction: column; gap: 0; }
+  .chain-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .chain-item:last-child { border-bottom: none; }
+  .chain-icon {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--bg4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .chain-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .chain-detail { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* ── METRICS TABLE ── */
+  .metric-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    gap: 12px;
+  }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-key { color: var(--text2); }
+  .metric-val { font-weight: 500; color: var(--text); text-align: right; }
+
+  /* ── RISK BAR ── */
+  .risk-bar-bg {
+    height: 8px;
+    background: var(--bg3);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 8px 0 4px;
+  }
+  .risk-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ── FINAL BOX ── */
+  .final-box {
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin-top: 6px;
+  }
+  .final-trade { background: var(--green-bg); border: 1.5px solid var(--green-border); }
+  .final-avoid { background: var(--red-bg);   border: 1.5px solid var(--red-border); }
+  .final-eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; margin-bottom: 8px; }
+  .final-trade .final-eyebrow { color: rgba(0,200,150,0.6); }
+  .final-avoid .final-eyebrow { color: rgba(255,90,90,0.6); }
+  .final-decision { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+  .final-trade .final-decision { color: var(--green); }
+  .final-avoid .final-decision { color: var(--red); }
+  .final-reason { font-size: 13.5px; margin-top: 10px; line-height: 1.7; }
+  .final-trade .final-reason { color: rgba(0,200,150,0.85); }
+  .final-avoid .final-reason { color: rgba(255,90,90,0.85); }
+
+  /* ── NO TRADE BANNER ── */
+  .no-trade-banner {
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-border);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--amber);
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  .no-trade-banner.visible { display: flex; }
+
+  /* ── SECTION HEADING ── */
+  .section-heading {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    font-weight: 600;
+    margin: 22px 0 10px;
+  }
+
+  /* ── NUMBER HIGHLIGHT ── */
+  .num-up   { color: var(--green); font-weight: 700; }
+  .num-down { color: var(--red);   font-weight: 700; }
+
+  /* ── SECTION NUMBER PILL ── */
+  .sec-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; height: 20px;
+    background: var(--bg4);
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text3);
+    flex-shrink: 0;
+  }
 </style>
+</head>
+<body>
 
-<div class="app">
-  <h2 class="sr-only">NQ Analyst — Nasdaq Pre-Market Report Tool</h2>
-
-  <div class="header">
-    <div class="header-icon">
-      <i class="ti ti-chart-candle" style="color:#fff; font-size:18px;" aria-hidden="true"></i>
-    </div>
-    <div>
-      <div class="header-title">NQ Analyst</div>
-      <div class="header-sub">Nasdaq Pre-Market & 10 AM Report</div>
-    </div>
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo-icon"><i class="fas fa-chart-candlestick"></i></div>
+  <div>
+    <span class="logo-text">NQ Analyst</span>
+    <span class="logo-sub">Nasdaq Pre-Market Report</span>
   </div>
-
-  <div class="section-label">Session info</div>
-  <div class="card">
-    <div class="grid-3">
-      <div class="field-group">
-        <label class="field-label">Date</label>
-        <input type="date" id="date" />
-      </div>
-      <div class="field-group">
-        <label class="field-label">Day</label>
-        <select id="day">
-          <option value="">Select</option>
-          <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
-          <option>Thursday</option><option>Friday</option>
-        </select>
-      </div>
-      <div class="field-group">
-        <label class="field-label">Market</label>
-        <input type="text" value="NASDAQ" readonly style="color:var(--color-text-secondary);" />
-      </div>
-    </div>
+  <div class="topbar-right">
+    <div class="live-dot"></div>
+    <span class="live-label">10:00 AM EST Window</span>
   </div>
+</div>
 
-  <div class="section-label">News event (Forex Factory)</div>
-  <div class="card">
-    <div class="grid-2" style="margin-bottom:10px;">
-      <div class="field-group">
-        <label class="field-label">News name</label>
-        <input type="text" id="newsName" placeholder="e.g. Core CPI m/m" />
-      </div>
-      <div class="field-group">
-        <label class="field-label">Release time</label>
-        <input type="text" id="releaseTime" placeholder="e.g. 8:30 AM EST" />
-      </div>
-    </div>
-    <div class="field-group" style="margin-bottom:10px;">
-      <label class="field-label">Impact level</label>
-      <div class="impact-row">
-        <div class="impact-btn" id="impact-Red" onclick="selectImpact('Red')"><i class="ti ti-alert-circle" aria-hidden="true"></i> Red — High</div>
-        <div class="impact-btn" id="impact-Orange" onclick="selectImpact('Orange')"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Orange — Med</div>
-        <div class="impact-btn" id="impact-Yellow" onclick="selectImpact('Yellow')"><i class="ti ti-info-circle" aria-hidden="true"></i> Yellow — Low</div>
-      </div>
-    </div>
-    <div class="grid-3">
-      <div class="field-group">
-        <label class="field-label">Previous</label>
-        <input type="text" id="previous" placeholder="e.g. 0.3%" />
-      </div>
-      <div class="field-group">
-        <label class="field-label">Forecast</label>
-        <input type="text" id="forecast" placeholder="e.g. 0.2%" />
-      </div>
-      <div class="field-group">
-        <label class="field-label">Actual</label>
-        <input type="text" id="actual" placeholder="e.g. 0.1%" />
-      </div>
-    </div>
-  </div>
+<!-- MAIN -->
+<div class="container">
 
-  <div class="section-label">Market reaction data</div>
-  <div class="card">
-    <div class="grid-2" style="margin-bottom:10px;">
-      <div class="field-group">
-        <label class="field-label">Futures move before 9:30 (points)</label>
-        <input type="number" id="futuresMove" placeholder="e.g. +85 or -120" />
-      </div>
-      <div class="field-group">
-        <label class="field-label">Direction</label>
-        <div class="dir-row">
-          <div class="dir-btn" id="dir-Up" onclick="selectDir('Up')"><i class="ti ti-trending-up" aria-hidden="true"></i> Up</div>
-          <div class="dir-btn" id="dir-Down" onclick="selectDir('Down')"><i class="ti ti-trending-down" aria-hidden="true"></i> Down</div>
+  <!-- ── INPUT FORM ── -->
+  <div id="formSection">
+
+    <p class="section-heading"><i class="fas fa-calendar-day" style="color:var(--accent); margin-right:5px;"></i>Session info</p>
+    <div class="card">
+      <div class="grid-3">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="date" />
+        </div>
+        <div class="field">
+          <label>Day</label>
+          <select id="day">
+            <option value="">Select day</option>
+            <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+            <option>Thursday</option><option>Friday</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Market</label>
+          <input type="text" value="NASDAQ / NQ" readonly style="color:var(--text3);" />
         </div>
       </div>
     </div>
-    <div class="grid-3" style="margin-bottom:10px;">
-      <div class="field-group">
-        <label class="field-label">9:30 AM open price</label>
-        <input type="number" id="openPrice" placeholder="e.g. 19850" />
+
+    <p class="section-heading"><i class="fas fa-newspaper" style="color:var(--accent); margin-right:5px;"></i>News event — Forex Factory</p>
+    <div class="card">
+      <div class="grid-2" style="margin-bottom:12px;">
+        <div class="field">
+          <label>News name</label>
+          <input type="text" id="newsName" placeholder="e.g. Core CPI m/m" />
+        </div>
+        <div class="field">
+          <label>Release time</label>
+          <input type="text" id="releaseTime" placeholder="e.g. 8:30 AM EST" />
+        </div>
       </div>
-      <div class="field-group">
-        <label class="field-label">10:00 AM price</label>
-        <input type="number" id="price10" placeholder="e.g. 19920" />
+      <div class="field" style="margin-bottom:12px;">
+        <label>Impact level</label>
+        <div class="toggle-group">
+          <button class="toggle-btn" id="imp-Red"    onclick="setImpact('Red')"><i class="fas fa-circle" style="font-size:9px;"></i> Red — High</button>
+          <button class="toggle-btn" id="imp-Orange" onclick="setImpact('Orange')"><i class="fas fa-circle" style="font-size:9px;"></i> Orange — Medium</button>
+          <button class="toggle-btn" id="imp-Yellow" onclick="setImpact('Yellow')"><i class="fas fa-circle" style="font-size:9px;"></i> Yellow — Low</button>
+        </div>
       </div>
-      <div class="field-group">
-        <label class="field-label">9:30–10:00 move (pts)</label>
-        <input type="number" id="openMove" placeholder="e.g. 70" />
+      <div class="grid-3">
+        <div class="field">
+          <label>Previous</label>
+          <input type="text" id="previous" placeholder="e.g. 0.3%" />
+        </div>
+        <div class="field">
+          <label>Forecast</label>
+          <input type="text" id="forecast" placeholder="e.g. 0.2%" />
+        </div>
+        <div class="field">
+          <label>Actual</label>
+          <input type="text" id="actual" placeholder="e.g. 0.1%" />
+        </div>
       </div>
     </div>
-    <div class="grid-2">
-      <div class="field-group">
-        <label class="field-label">Premarket high</label>
-        <input type="number" id="pmHigh" placeholder="e.g. 19970" />
+
+    <p class="section-heading"><i class="fas fa-chart-line" style="color:var(--accent); margin-right:5px;"></i>Market reaction data</p>
+    <div class="card">
+      <div class="grid-2" style="margin-bottom:12px;">
+        <div class="field">
+          <label>Futures move before 9:30 (points)</label>
+          <input type="number" id="futuresMove" placeholder="e.g. +85 or -120" />
+        </div>
+        <div class="field">
+          <label>Direction</label>
+          <div class="toggle-group">
+            <button class="toggle-btn" id="dir-Up"   onclick="setDir('Up')"><i class="fas fa-arrow-trend-up"></i> Up</button>
+            <button class="toggle-btn" id="dir-Down" onclick="setDir('Down')"><i class="fas fa-arrow-trend-down"></i> Down</button>
+          </div>
+        </div>
       </div>
-      <div class="field-group">
-        <label class="field-label">Premarket low</label>
-        <input type="number" id="pmLow" placeholder="e.g. 19740" />
+      <div class="grid-3" style="margin-bottom:12px;">
+        <div class="field">
+          <label>9:30 AM open price</label>
+          <input type="number" id="openPrice" placeholder="e.g. 19850" />
+        </div>
+        <div class="field">
+          <label>10:00 AM price</label>
+          <input type="number" id="price10" placeholder="e.g. 19920" />
+        </div>
+        <div class="field">
+          <label>9:30–10:00 move (pts)</label>
+          <input type="number" id="openMove" placeholder="e.g. 70" />
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Premarket high</label>
+          <input type="number" id="pmHigh" placeholder="e.g. 19970" />
+        </div>
+        <div class="field">
+          <label>Premarket low</label>
+          <input type="number" id="pmLow" placeholder="e.g. 19740" />
+        </div>
       </div>
     </div>
-  </div>
 
-  <button class="analyze-btn" onclick="runAnalysis()" id="analyzeBtn">
-    <i class="ti ti-report-analytics" aria-hidden="true"></i> Generate Report
-  </button>
+    <button class="btn-analyze" onclick="runAnalysis()" id="analyzeBtn">
+      <i class="fas fa-chart-bar" style="margin-right:8px;"></i>Generate Report
+    </button>
 
+  </div><!-- /formSection -->
+
+  <!-- LOADER -->
   <div class="loader" id="loader">
-    <i class="ti ti-loader" style="font-size:24px; margin-bottom:8px; display:block;" aria-hidden="true"></i>
-    <span class="dot-anim">Analyzing market conditions</span>
+    <div class="spinner"></div>
+    <div>Analyzing market conditions…</div>
   </div>
 
-  <div class="report-area" id="reportArea">
-    <hr class="divider" style="margin: 1.5rem 0;" />
-    <div class="section-label">Market report — 10:00 AM EST</div>
+  <!-- ── REPORT ── -->
+  <div class="report" id="reportSection">
+    <hr class="divider" />
 
-    <div class="no-trade-banner" id="noTradeBanner">
-      <i class="ti ti-alert-triangle" aria-hidden="true"></i> <strong>No-trade filter active</strong> — <span id="noTradeReason"></span>
-    </div>
-
-    <div class="card" style="margin-bottom:10px;">
-      <div class="section-title">
-        <span class="section-num">1</span> News quality & surprise
+    <div class="report-header">
+      <div>
+        <div class="report-title">Market Report</div>
+        <div class="report-meta" id="reportMeta">NASDAQ · 10:00 AM EST Window</div>
       </div>
-      <div id="newsQualityBadge" style="margin-bottom:8px;"></div>
-      <div style="font-size:13.5px; color:var(--color-text-primary); line-height:1.7;" id="newsQualityText"></div>
+      <div id="reportDateBadge"></div>
     </div>
 
-    <div class="card" style="margin-bottom:10px;">
-      <div class="section-title"><span class="section-num">2</span> Macro transmission chain</div>
-      <div class="chain-list" id="chainList"></div>
+    <!-- NO TRADE BANNER -->
+    <div class="no-trade-banner" id="noTradeBanner">
+      <i class="fas fa-triangle-exclamation"></i>
+      <div><strong>No-trade filter active —</strong> <span id="noTradeReason"></span></div>
     </div>
 
+    <!-- KEY METRICS ROW -->
+    <div class="grid-4" style="margin-bottom:14px;" id="metricCards"></div>
+
+    <!-- SECTION 1: NEWS QUALITY -->
+    <div class="card">
+      <div class="card-title"><i class="fas fa-newspaper"></i><span class="sec-num">1</span> News quality & surprise</div>
+      <div style="margin-bottom:10px;" id="newsQualityBadges"></div>
+      <div style="font-size:13.5px; color:var(--text2); line-height:1.75;" id="newsQualityText"></div>
+    </div>
+
+    <!-- SECTION 2: MACRO CHAIN -->
+    <div class="card">
+      <div class="card-title"><i class="fas fa-link"></i><span class="sec-num">2</span> Macro transmission chain</div>
+      <div class="chain" id="chainList"></div>
+    </div>
+
+    <!-- SECTION 3+4: PRICING + IMPACT REMAINING -->
     <div class="grid-2">
       <div class="card">
-        <div class="section-title"><span class="section-num">3</span> Premarket pricing</div>
-        <div id="pricingBadge" style="margin-bottom:6px;"></div>
-        <div style="font-size:13px; color:var(--color-text-primary); line-height:1.6;" id="pricingText"></div>
+        <div class="card-title"><i class="fas fa-gauge-high"></i><span class="sec-num">3</span> Premarket pricing</div>
+        <div style="margin-bottom:8px;" id="pricingBadge"></div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.65;" id="pricingText"></div>
       </div>
       <div class="card">
-        <div class="section-title"><span class="section-num">4</span> News impact at 10 AM</div>
-        <div id="impactBadge" style="margin-bottom:6px;"></div>
-        <div style="font-size:13px; color:var(--color-text-primary); line-height:1.6;" id="impactRemText"></div>
+        <div class="card-title"><i class="fas fa-clock"></i><span class="sec-num">4</span> News impact at 10 AM</div>
+        <div style="margin-bottom:8px;" id="impactBadge"></div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.65;" id="impactText"></div>
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:10px;">
-      <div class="section-title"><span class="section-num">5</span> 9:30–10:00 cash open reading</div>
-      <div id="openReadBadge" style="margin-bottom:8px;"></div>
-      <div style="font-size:13.5px; color:var(--color-text-primary); line-height:1.7;" id="openReadText"></div>
+    <!-- SECTION 5: OPEN READING -->
+    <div class="card">
+      <div class="card-title"><i class="fas fa-bell"></i><span class="sec-num">5</span> 9:30–10:00 cash open reading</div>
+      <div style="margin-bottom:8px;" id="openReadBadge"></div>
+      <div style="font-size:13.5px; color:var(--text2); line-height:1.75;" id="openReadText"></div>
     </div>
 
-    <div class="card" style="margin-bottom:10px;">
-      <div class="section-title"><span class="section-num">6</span> Summary metrics</div>
-      <div id="metricsTable"></div>
+    <!-- SECTION 6: SUMMARY TABLE -->
+    <div class="card">
+      <div class="card-title"><i class="fas fa-table-list"></i><span class="sec-num">6</span> Full session summary</div>
+      <div id="summaryTable"></div>
     </div>
 
-    <div class="card" style="margin-bottom:10px;">
-      <div class="section-title"><span class="section-num">7</span> Risk level</div>
-      <div style="font-size:12px; color:var(--color-text-secondary); margin-bottom:4px;" id="riskLabel"></div>
-      <div class="risk-bar-wrap">
-        <div class="risk-bar-bg"><div class="risk-bar-fill" id="riskBar"></div></div>
+    <!-- SECTION 7: RISK BAR -->
+    <div class="card">
+      <div class="card-title"><i class="fas fa-shield-halved"></i><span class="sec-num">7</span> Risk assessment</div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:13px; color:var(--text2);" id="riskLabel">—</span>
+        <span style="font-size:12px; font-weight:700;" id="riskPct">—</span>
       </div>
+      <div class="risk-bar-bg"><div class="risk-bar-fill" id="riskBar" style="width:0%;"></div></div>
+      <div style="font-size:12px; color:var(--text3); margin-top:4px;" id="riskDetail"></div>
     </div>
 
+    <!-- FINAL DECISION -->
     <div class="final-box" id="finalBox">
-      <div style="font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; opacity:0.7;" id="finalLabel"></div>
+      <div class="final-eyebrow">Final decision — 10:00 AM EST</div>
       <div class="final-decision" id="finalDecision"></div>
       <div class="final-reason" id="finalReason"></div>
     </div>
 
-    <button class="analyze-btn" style="margin-top:1rem; background:var(--color-background-secondary); color:var(--color-text-secondary); border:0.5px solid var(--color-border-secondary);" onclick="resetForm()">
-      <i class="ti ti-refresh" aria-hidden="true"></i> New session
+    <button class="btn-reset" onclick="resetForm()">
+      <i class="fas fa-rotate-left" style="margin-right:6px;"></i>New session
     </button>
-  </div>
-</div>
+
+  </div><!-- /report -->
+
+</div><!-- /container -->
 
 <script>
-let selectedImpact = '';
-let selectedDir = '';
+let selImpact = '', selDir = '';
 
-function selectImpact(val) {
-  selectedImpact = val;
-  ['Red','Orange','Yellow'].forEach(v => {
-    const el = document.getElementById('impact-' + v);
-    el.className = 'impact-btn' + (v === val ? ' active-' + v.toLowerCase() : '');
+function setImpact(v) {
+  selImpact = v;
+  ['Red','Orange','Yellow'].forEach(k => {
+    document.getElementById('imp-'+k).className = 'toggle-btn' + (k===v ? ' active-'+k.toLowerCase() : '');
+  });
+}
+function setDir(v) {
+  selDir = v;
+  ['Up','Down'].forEach(k => {
+    document.getElementById('dir-'+k).className = 'toggle-btn' + (k===v ? ' active-'+k.toLowerCase() : '');
   });
 }
 
-function selectDir(val) {
-  selectedDir = val;
-  ['Up','Down'].forEach(v => {
-    const el = document.getElementById('dir-' + v);
-    el.className = 'dir-btn' + (v === val ? ' active-' + v.toLowerCase() : '');
-  });
+function badge(txt, cls) {
+  return `<span class="badge badge-${cls}">${txt}</span>`;
 }
 
-function badge(text, color) {
-  return `<span class="badge badge-${color}">${text}</span>`;
+function chainRow(icon, label, detail) {
+  return `<div class="chain-item">
+    <div class="chain-icon"><i class="fas fa-${icon}"></i></div>
+    <div><div class="chain-label">${label}</div><div class="chain-detail">${detail}</div></div>
+  </div>`;
 }
 
-function chainNode(icon, label, detail) {
-  return `<div class="chain-item"><i class="ti ti-${icon}" style="font-size:15px; color:var(--color-text-secondary); width:16px;" aria-hidden="true"></i><span><strong>${label}</strong>${detail ? ' — ' + detail : ''}</span></div><div class="chain-arrow" style="padding-left:6px;">↓</div>`;
+function metricCard(label, value, sub, color) {
+  return `<div class="metric-card">
+    <div class="metric-label">${label}</div>
+    <div class="metric-value" style="color:${color||'var(--text)'};">${value}</div>
+    ${sub ? `<div class="metric-sub">${sub}</div>` : ''}
+  </div>`;
+}
+
+function row(key, val) {
+  return `<div class="metric-row"><span class="metric-key">${key}</span><span class="metric-val">${val}</span></div>`;
 }
 
 function runAnalysis() {
-  const newsName = document.getElementById('newsName').value.trim();
-  const releaseTime = document.getElementById('releaseTime').value.trim();
-  const previous = document.getElementById('previous').value.trim();
-  const forecast = document.getElementById('forecast').value.trim();
-  const actual = document.getElementById('actual').value.trim();
-  const futuresMove = parseFloat(document.getElementById('futuresMove').value) || 0;
-  const openPrice = parseFloat(document.getElementById('openPrice').value) || 0;
-  const price10 = parseFloat(document.getElementById('price10').value) || 0;
-  const openMove = parseFloat(document.getElementById('openMove').value) || 0;
-  const pmHigh = parseFloat(document.getElementById('pmHigh').value) || 0;
-  const pmLow = parseFloat(document.getElementById('pmLow').value) || 0;
-  const day = document.getElementById('day').value;
+  const nn   = document.getElementById('newsName').value.trim();
+  if (!nn) { alert('Please enter the news name from Forex Factory.'); return; }
+
+  const rt   = document.getElementById('releaseTime').value.trim() || '8:30 AM EST';
+  const prev = document.getElementById('previous').value.trim();
+  const fc   = document.getElementById('forecast').value.trim();
+  const act  = document.getElementById('actual').value.trim();
+  const fm   = parseFloat(document.getElementById('futuresMove').value) || 0;
+  const op   = parseFloat(document.getElementById('openPrice').value) || 0;
+  const p10  = parseFloat(document.getElementById('price10').value) || 0;
+  const om   = parseFloat(document.getElementById('openMove').value) || 0;
+  const pmH  = parseFloat(document.getElementById('pmHigh').value) || 0;
+  const pmL  = parseFloat(document.getElementById('pmLow').value) || 0;
+  const day  = document.getElementById('day').value;
   const date = document.getElementById('date').value;
+  const imp  = selImpact || 'Red';
+  const dir  = selDir   || (fm >= 0 ? 'Up' : 'Down');
 
-  if (!newsName) { alert('Please enter the news name.'); return; }
-
-  document.getElementById('loader').classList.add('active');
   document.getElementById('analyzeBtn').disabled = true;
-  document.getElementById('reportArea').classList.remove('visible');
+  document.getElementById('loader').classList.add('active');
+  document.getElementById('reportSection').classList.remove('visible');
 
   setTimeout(() => {
     document.getElementById('loader').classList.remove('active');
+    build({ nn, rt, prev, fc, act, fm, op, p10, om, pmH, pmL, day, date, imp, dir });
     document.getElementById('analyzeBtn').disabled = false;
-    buildReport({ newsName, releaseTime, previous, forecast, actual, futuresMove, openPrice, price10, openMove, pmHigh, pmLow, day, date });
-    document.getElementById('reportArea').classList.add('visible');
-    document.getElementById('reportArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 1200);
+    document.getElementById('reportSection').classList.add('visible');
+    document.getElementById('reportSection').scrollIntoView({ behavior:'smooth', block:'start' });
+  }, 1100);
 }
 
-function buildReport(d) {
-  const absFutures = Math.abs(d.futuresMove);
-  const absOpenMove = Math.abs(d.openMove);
-  const pmRange = (d.pmHigh && d.pmLow) ? d.pmHigh - d.pmLow : 0;
-  const isUp = d.selectedDir === 'Up' || (d.futuresMove > 0 && selectedDir !== 'Down') || selectedDir === 'Up';
-  const dir = selectedDir || (d.futuresMove >= 0 ? 'Up' : 'Down');
-  const impactLevel = selectedImpact || 'Red';
+function build(d) {
+  const absFm  = Math.abs(d.fm);
+  const absOm  = Math.abs(d.om);
+  const range  = (d.pmH && d.pmL) ? (d.pmH - d.pmL).toFixed(0) : '—';
+  const isUp   = d.dir === 'Up';
+  const isHigh = d.imp === 'Red';
+  const isMed  = d.imp === 'Orange';
 
-  const noTradeEvents = ['fomc','cpi','core cpi','pce','nfp','non-farm','powell','payroll'];
-  const isNoTrade = noTradeEvents.some(e => d.newsName.toLowerCase().includes(e));
+  // Date meta
+  const dateStr = d.date ? new Date(d.date + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+  document.getElementById('reportMeta').textContent = `NASDAQ · 10:00 AM EST Window${d.day ? ' · '+d.day : ''}`;
+  document.getElementById('reportDateBadge').innerHTML = dateStr ? badge(dateStr, 'gray') : '';
 
-  document.getElementById('noTradeBanner').classList.toggle('visible', isNoTrade);
-  if (isNoTrade) {
-    document.getElementById('noTradeReason').textContent = 'High-impact event detected. Heightened volatility and whipsaw risk at 10 AM.';
+  // No-trade filter
+  const noTradeKeys = ['fomc','cpi','core cpi','pce','nfp','non-farm','payroll','powell'];
+  const isNoTrade = noTradeKeys.some(k => d.nn.toLowerCase().includes(k));
+  const banner = document.getElementById('noTradeBanner');
+  banner.classList.toggle('visible', isNoTrade);
+  if (isNoTrade) document.getElementById('noTradeReason').textContent =
+    `${d.nn} is a tier-1 macro event. Volatility spikes and whipsaw risk are elevated at 10 AM. Consider waiting until 10:30–11:00 for structure.`;
+
+  // ── KEY METRIC CARDS ──
+  const openMoveColor = d.om > 0 ? 'var(--green)' : d.om < 0 ? 'var(--red)' : 'var(--text)';
+  const fmColor = d.fm > 0 ? 'var(--green)' : d.fm < 0 ? 'var(--red)' : 'var(--text)';
+  document.getElementById('metricCards').innerHTML =
+    metricCard('Futures move', (d.fm>0?'+':'')+d.fm+' pts', 'Before 9:30 AM', fmColor) +
+    metricCard('PM Range', range ? range+' pts' : '—', 'High–Low', 'var(--text)') +
+    metricCard('9:30–10:00', (d.om>0?'+':'')+d.om+' pts', 'Cash open move', openMoveColor) +
+    metricCard('Bias', isUp?'Bullish':'Bearish', d.imp+' impact', isUp?'var(--green)':'var(--red)');
+
+  // ── NEWS QUALITY ──
+  let nqClass, nqColor, nqDesc;
+  if (isHigh) { nqClass='A — Market-moving'; nqColor='red'; }
+  else if (isMed) { nqClass='B — Moderate impact'; nqColor='amber'; }
+  else { nqClass='C — Noise'; nqColor='gray'; }
+
+  let surprise = null;
+  if (d.act && d.fc) {
+    const a = parseFloat(d.act), f = parseFloat(d.fc);
+    if (!isNaN(a) && !isNaN(f)) {
+      const lower = ['cpi','inflation','unemployment','jobless','claims','deficit'];
+      const lowerIsBetter = lower.some(k => d.nn.toLowerCase().includes(k));
+      surprise = lowerIsBetter ? (a < f) : (a > f);
+    }
   }
+  const surpriseLabel = surprise === true ? '✓ Bullish surprise' : surprise === false ? '✗ Bearish surprise' : '— Surprise unclear';
+  const surpriseColor = surprise === true ? 'green' : surprise === false ? 'red' : 'gray';
 
-  const isHighImpact = impactLevel === 'Red';
-  const isMedImpact = impactLevel === 'Orange';
+  document.getElementById('newsQualityBadges').innerHTML =
+    badge(nqClass, nqColor) + ' &nbsp;' + badge(surpriseLabel, surpriseColor);
 
-  let newsClass = 'A — Market-moving';
-  let newsClassColor = 'red';
-  if (isMedImpact) { newsClass = 'B — Moderate impact'; newsClassColor = 'amber'; }
-  if (impactLevel === 'Yellow') { newsClass = 'C — Noise'; newsClassColor = 'gray'; }
+  const fcvsact = (d.act && d.fc) ? `Actual <strong>${d.act}</strong> vs Forecast <strong>${d.fc}</strong>${d.prev?' (Previous '+d.prev+')':''}.` : 'Forecast/actual data not provided.';
+  const sentLine = surprise === true
+    ? 'The print came in better than expected — institutions will likely price in a more dovish Fed path, supporting tech multiples and NQ upside.'
+    : surprise === false
+    ? 'The miss raises concern — hotter/weaker than expected data may push yields higher or reduce risk appetite, pressuring growth stocks.'
+    : 'Without numeric data the macro direction is ambiguous — watch price action for institutional intent.';
 
-  const surpriseText = (d.actual && d.forecast)
-    ? `Actual: ${d.actual} vs Forecast: ${d.forecast} (Previous: ${d.previous || 'N/A'})`
-    : 'No forecast data provided — magnitude of surprise unknown.';
-
-  const isBullishSurprise = (() => {
-    if (!d.actual || !d.forecast) return null;
-    const a = parseFloat(d.actual);
-    const f = parseFloat(d.forecast);
-    if (isNaN(a) || isNaN(f)) return null;
-    const lower_better = ['cpi','inflation','unemployment','jobless','claims','deficit'];
-    const is_lower_better = lower_better.some(k => d.newsName.toLowerCase().includes(k));
-    return is_lower_better ? a < f : a > f;
-  })();
-
-  const sentimentText = isBullishSurprise === true
-    ? 'Bullish surprise — actual beat expectations, supporting risk-on sentiment.'
-    : isBullishSurprise === false
-    ? 'Bearish surprise — actual missed expectations, raising risk-off pressure.'
-    : 'Surprise direction unclear without numeric data.';
-
-  document.getElementById('newsQualityBadge').innerHTML = badge(newsClass, newsClassColor) + ' &nbsp;' + badge(impactLevel + ' impact', newsClassColor);
   document.getElementById('newsQualityText').innerHTML =
-    `<strong>${d.newsName}</strong> released at ${d.releaseTime || '8:30 AM EST'}. ${surpriseText}<br><span style="color:var(--color-text-secondary);">${sentimentText}</span>`;
+    `<strong>${d.nn}</strong> released at ${d.rt}. ${fcvsact}<br><span style="color:var(--text3);">${sentLine}</span>`;
 
-  const chain = [];
-  chain.push(chainNode('news', d.newsName, d.actual ? `Actual ${d.actual}` : ''));
-  if (isHighImpact) {
-    chain.push(chainNode('building-bank', 'Fed expectation', isBullishSurprise === false ? 'Rate cut hopes reduced' : isBullishSurprise === true ? 'Rate cut path supported' : 'Re-evaluation of rate path'));
-    chain.push(chainNode('chart-line', 'Bond yields', isBullishSurprise === false ? 'Yields rise — pressure on growth stocks' : 'Yields fall — supports tech multiples'));
-    chain.push(chainNode('cpu', 'Technology stocks', isBullishSurprise === false ? 'Valuation compression risk' : 'Multiple expansion supported'));
-    chain.push(chainNode('chart-candle', 'Nasdaq (NQ)', dir === 'Up' ? 'Bullish bias — follow-through likely' : 'Bearish bias — downside risk remains'));
+  // ── MACRO CHAIN ──
+  let chain = '';
+  chain += chainRow('newspaper', d.nn, d.act ? `Actual: ${d.act} | Forecast: ${d.fc||'—'}` : 'Data released');
+  if (isHigh) {
+    chain += chainRow('university', 'Fed expectation', surprise===true ? 'Rate cut narrative supported — market pricing more easing' : surprise===false ? 'Rate cut path pressured — may delay easing' : 'Neutral — market reassessing Fed trajectory');
+    chain += chainRow('hand-holding-dollar', 'Bond yields', surprise===true ? 'Yields dip → lower discount rate for equities' : surprise===false ? 'Yields rise → compression on growth stock valuations' : 'Yield reaction depends on magnitude of surprise');
+    chain += chainRow('microchip', 'Technology stocks', surprise===true ? 'Lower rates benefit long-duration tech — positive catalyst' : surprise===false ? 'Higher rates pressure tech multiples — negative catalyst' : 'Direction unclear, technicals will lead');
   } else {
-    chain.push(chainNode('building-bank', 'Fed expectation', 'Minimal repricing expected'));
-    chain.push(chainNode('chart-candle', 'Nasdaq (NQ)', 'Price action likely leads over macro'));
+    chain += chainRow('university', 'Fed expectation', 'Minimal repricing — this event carries limited Fed narrative weight');
+    chain += chainRow('microchip', 'Technology stocks', 'Sector-specific factors likely more important than this print');
   }
+  chain += chainRow('chart-candlestick', 'Nasdaq (NQ)', isUp ? `Bullish bias — ${absFm} pt premarket advance` : `Bearish bias — ${absFm} pt premarket decline`);
+  document.getElementById('chainList').innerHTML = chain;
 
-  let chainHTML = '<div class="chain-list">';
-  chainHTML += chain.join('');
-  chainHTML = chainHTML.replace(/<div class="chain-arrow"[^>]*>↓<\/div>$/, '');
-  chainHTML += '</div>';
-  document.getElementById('chainList').innerHTML = chainHTML;
-
-  let pricingLabel = 'PARTIALLY PRICED';
-  let pricingColor = 'amber';
-  let pricingText = 'Market has reacted but residual effect possible at 10 AM.';
-  if (absFutures > 150) { pricingLabel = 'FULLY PRICED'; pricingColor = 'red'; pricingText = 'Large premarket move suggests most of the news is already absorbed. Chasing risk is elevated.'; }
-  else if (absFutures < 60) { pricingLabel = 'FRESH MOVE'; pricingColor = 'teal'; pricingText = 'Small premarket reaction — news may not be fully priced. Continuation potential remains.'; }
-
+  // ── PREMARKET PRICING ──
+  let pricingLabel, pricingColor, pricingText;
+  if (absFm > 160) {
+    pricingLabel='FULLY PRICED'; pricingColor='red';
+    pricingText='A '+absFm+'-point premarket surge means the news catalyst is largely exhausted. Chasing at 10 AM carries fade risk.';
+  } else if (absFm < 55) {
+    pricingLabel='FRESH MOVE'; pricingColor='green';
+    pricingText='Only '+absFm+' pts of premarket reaction — the catalyst has room to run. Continuation setups carry better risk/reward.';
+  } else {
+    pricingLabel='PARTIALLY PRICED'; pricingColor='amber';
+    pricingText=absFm+'-pt premarket move suggests partial pricing. Some continuation is possible, but expect noise around the open.';
+  }
   document.getElementById('pricingBadge').innerHTML = badge(pricingLabel, pricingColor);
   document.getElementById('pricingText').textContent = pricingText;
 
-  let impRemLabel = 'MEDIUM';
-  let impRemColor = 'amber';
-  let impRemText = 'Initial move has occurred. Some residual effect at 10 AM.';
-  if (isHighImpact && absFutures > 80) { impRemLabel = 'HIGH'; impRemColor = 'red'; impRemText = 'Big event + big move. Market likely still repricing at 10 AM. Elevated volatility window.'; }
-  else if (!isHighImpact || absFutures < 40) { impRemLabel = 'LOW'; impRemColor = 'gray'; impRemText = 'News absorbed. Price action and order flow now matter more than the headline.'; }
+  // ── IMPACT REMAINING ──
+  let impLabel, impColor, impText;
+  if (isHigh && absFm > 90) {
+    impLabel='HIGH REMAINING'; impColor='red';
+    impText='Major event + large premarket reaction = market still repricing at 10 AM. Volatility window elevated.';
+  } else if (!isHigh || absFm < 45) {
+    impLabel='LOW REMAINING'; impColor='gray';
+    impText='News largely absorbed. Technical levels and order flow will drive price more than the headline at 10 AM.';
+  } else {
+    impLabel='MEDIUM REMAINING'; impColor='amber';
+    impText='Initial shock done. Residual directional bias persists but choppiness is likely as market digests the print.';
+  }
+  document.getElementById('impactBadge').innerHTML = badge(impLabel, impColor);
+  document.getElementById('impactText').textContent = impText;
 
-  document.getElementById('impactBadge').innerHTML = badge(impRemLabel + ' remaining impact', impRemColor);
-  document.getElementById('impactRemText').textContent = impRemText;
-
-  let openRead = 'A — Institutional acceptance';
-  let openColor = 'teal';
-  let openText = 'The 9:30–10:00 move confirms the premarket direction. Institutions appear to accept the narrative, supporting continuation bias.';
-  const openMatchesPre = (dir === 'Up' && d.openMove > 0) || (dir === 'Down' && d.openMove < 0);
-
-  if (absOpenMove > 100) { openRead = 'B — Overreaction'; openColor = 'amber'; openText = 'Large 30-min move signals possible overextension. Watch for mean reversion or exhaustion near 10 AM.'; }
-  else if (!openMatchesPre && absOpenMove > 20) { openRead = 'C — News failure / reversal'; openColor = 'red'; openText = 'Price reversed against the news direction in the first 30 min. The narrative may be fading. Proceed with caution.'; }
-  else if (absOpenMove < 15) { openRead = 'D — Market ignoring news'; openColor = 'gray'; openText = 'Minimal follow-through at the open. Other catalysts or low liquidity may be overriding the news effect.'; }
-
-  document.getElementById('openReadBadge').innerHTML = badge(openRead, openColor);
+  // ── OPEN READING ──
+  const openMatchesPre = (isUp && d.om > 0) || (!isUp && d.om < 0);
+  let openLabel, openColor, openText;
+  if (absOm > 110) {
+    openLabel='B — Overreaction'; openColor='amber';
+    openText='The first 30 minutes moved '+absOm+' pts — an outsized move that often leads to a pullback or consolidation. Reversal risk is elevated near 10 AM.';
+  } else if (!openMatchesPre && absOm > 18) {
+    openLabel='C — Reversal / News failure'; openColor='red';
+    openText='Price moved against the premarket direction during 9:30–10:00. The news narrative is losing traction — trade with caution or wait for re-confirmation.';
+  } else if (absOm < 14) {
+    openLabel='D — Market ignoring news'; openColor='gray';
+    openText='Minimal follow-through at the open suggests other forces (earnings, sector rotation, external events) are absorbing the macro print.';
+  } else {
+    openLabel='A — Institutional acceptance'; openColor='green';
+    openText='The open confirmed premarket direction with '+absOm+' pts of follow-through. Institutions appear to accept the narrative — continuation bias is active.';
+  }
+  document.getElementById('openReadBadge').innerHTML = badge(openLabel, openColor);
   document.getElementById('openReadText').textContent = openText;
 
-  const biasDir = dir === 'Up' ? 'Bullish' : 'Bearish';
-  const biasColor = dir === 'Up' ? 'teal' : 'red';
-  const confLevel = isHighImpact && absFutures > 80 ? 'High' : isHighImpact ? 'Medium' : 'Low';
-  const marketCond = absFutures > 120 ? 'Trending' : absOpenMove > 80 ? 'Reversal risk' : absOpenMove < 20 ? 'Choppy / unclear' : 'Continuation';
+  // ── MARKET CONDITION ──
+  let mktCond, mktColor;
+  if (absFm > 130) { mktCond='Trending'; mktColor='green'; }
+  else if (absOm > 90) { mktCond='Reversal risk'; mktColor='red'; }
+  else if (absOm < 14) { mktCond='Choppy / unclear'; mktColor='gray'; }
+  else { mktCond='Continuation'; mktColor='green'; }
 
-  document.getElementById('metricsTable').innerHTML = `
-    <div class="metric-row"><span class="metric-key">News</span><span class="metric-val">${d.newsName}</span></div>
-    <div class="metric-row"><span class="metric-key">Actual vs forecast</span><span class="metric-val">${d.actual || '—'} vs ${d.forecast || '—'}</span></div>
-    <div class="metric-row"><span class="metric-key">Premarket futures move</span><span class="metric-val">${d.futuresMove > 0 ? '+' : ''}${d.futuresMove} pts</span></div>
-    <div class="metric-row"><span class="metric-key">9:30 open → 10:00</span><span class="metric-val">${d.openPrice ? d.openPrice.toFixed(0) : '—'} → ${d.price10 ? d.price10.toFixed(0) : '—'} (${d.openMove > 0 ? '+' : ''}${d.openMove} pts)</span></div>
-    <div class="metric-row"><span class="metric-key">Premarket range</span><span class="metric-val">${pmRange ? pmRange.toFixed(0) + ' pts' : '—'}</span></div>
-    <div class="metric-row"><span class="metric-key">Market condition</span><span class="metric-val">${badge(marketCond, biasColor)}</span></div>
-    <div class="metric-row"><span class="metric-key">Nasdaq bias</span><span class="metric-val">${badge(biasDir, biasColor)}</span></div>
-    <div class="metric-row"><span class="metric-key">Confidence</span><span class="metric-val">${badge(confLevel, confLevel === 'High' ? 'teal' : confLevel === 'Medium' ? 'amber' : 'gray')}</span></div>
-  `;
+  // ── CONFIDENCE ──
+  const confLevel = isHigh && absFm > 80 ? 'High' : isHigh ? 'Medium' : 'Low';
+  const confColor = confLevel==='High'?'green':confLevel==='Medium'?'amber':'gray';
 
-  let riskPct = 40;
-  let riskLabel = 'Moderate risk';
-  let riskColor = '#EF9F27';
-  if (isNoTrade || (isHighImpact && absFutures > 100)) { riskPct = 82; riskLabel = 'High risk — elevated volatility'; riskColor = '#E24B4A'; }
-  else if (!isHighImpact && absFutures < 40) { riskPct = 22; riskLabel = 'Low risk — clean conditions'; riskColor = '#1D9E75'; }
+  // ── SUMMARY TABLE ──
+  document.getElementById('summaryTable').innerHTML =
+    row('News event', `<strong>${d.nn}</strong>`) +
+    row('Release time', d.rt) +
+    row('Impact', badge(d.imp, d.imp==='Red'?'red':d.imp==='Orange'?'amber':'gray')) +
+    row('Actual vs forecast', d.act&&d.fc ? `${d.act} vs ${d.fc}` : '—') +
+    row('Premarket futures move', `<span class="${isUp?'num-up':'num-down'}">${d.fm>0?'+':''}${d.fm} pts</span>`) +
+    row('9:30 open → 10:00', d.op&&d.p10 ? `${d.op.toFixed(0)} → ${d.p10.toFixed(0)} (${d.om>0?'+':''}${d.om} pts)` : '—') +
+    row('Premarket range', range+' pts') +
+    row('Premarket pricing', badge(pricingLabel, pricingColor)) +
+    row('Impact remaining', badge(impLabel, impColor)) +
+    row('Market condition at 10 AM', badge(mktCond, mktColor)) +
+    row('Nasdaq bias', badge(isUp?'Bullish':'Bearish', isUp?'green':'red')) +
+    row('Confidence', badge(confLevel, confColor));
 
+  // ── RISK BAR ──
+  let riskPct, riskLabel, riskColor, riskDetail;
+  if (isNoTrade || (isHigh && absFm > 120)) {
+    riskPct=84; riskLabel='High risk'; riskColor='var(--red)';
+    riskDetail='Tier-1 event with large premarket move. Widened spreads, false breakouts, and whipsaw sequences are common.';
+  } else if (!isHigh && absFm < 40) {
+    riskPct=22; riskLabel='Low risk'; riskColor='var(--green)';
+    riskDetail='Low-impact event with contained premarket reaction. Conditions are relatively clean for technical setups.';
+  } else {
+    riskPct=48; riskLabel='Moderate risk'; riskColor='var(--amber)';
+    riskDetail='Standard macro event. Risk is manageable with disciplined sizing and clear stop placement.';
+  }
   document.getElementById('riskLabel').textContent = riskLabel;
+  document.getElementById('riskPct').textContent = riskPct + '%';
+  document.getElementById('riskPct').style.color = riskColor;
   document.getElementById('riskBar').style.width = riskPct + '%';
   document.getElementById('riskBar').style.background = riskColor;
+  document.getElementById('riskDetail').textContent = riskDetail;
 
+  // ── FINAL DECISION ──
   const shouldTrade = !isNoTrade && riskPct < 65 && confLevel !== 'Low';
-  const finalBox = document.getElementById('finalBox');
-  finalBox.className = 'final-box ' + (shouldTrade ? 'final-trade' : 'final-avoid');
-  document.getElementById('finalLabel').textContent = 'Final decision — 10:00 AM EST';
-  document.getElementById('finalDecision').textContent = shouldTrade ? '✓ Trade' : '✗ Avoid';
+  const fb = document.getElementById('finalBox');
+  fb.className = 'final-box ' + (shouldTrade ? 'final-trade' : 'final-avoid');
+  document.getElementById('finalDecision').textContent = shouldTrade ? '✓  Trade' : '✗  Avoid';
 
-  let reason = '';
-  if (isNoTrade) reason = `${d.newsName} is a high-impact macro event. Volatility at 10 AM remains elevated. Wait for structure to form post-10:30 AM before engaging.`;
-  else if (shouldTrade) reason = `${biasDir} bias with ${confLevel.toLowerCase()} confidence. ${pricingLabel === 'FULLY PRICED' ? 'News fully priced — trade technicals, not the headline.' : 'Residual momentum supports the bias direction.'} ${openRead.startsWith('A') ? 'Institutional acceptance at the open is a positive sign.' : ''} Risk is manageable.`;
-  else reason = `Conditions at 10 AM carry elevated uncertainty. ${pricingLabel === 'FULLY PRICED' ? 'News already priced in — limited edge from the catalyst.' : ''} ${openRead.includes('reversal') ? 'Price reversal at the open reduces conviction.' : ''} Best to wait for cleaner setup.`;
-
+  let reason;
+  if (isNoTrade) {
+    reason = `${d.nn} is a tier-1 event. 10 AM falls inside the volatility window. Market structure is unreliable — wait for 10:30–11:00 AM for cleaner conditions before entering.`;
+  } else if (shouldTrade) {
+    reason = `${isUp?'Bullish':'Bearish'} bias with ${confLevel.toLowerCase()} confidence. `
+      + (pricingLabel==='FRESH MOVE' ? 'News is not fully priced — catalyst still has energy. ' : 'Market has partially absorbed the news — technical continuation is the play. ')
+      + (openLabel.startsWith('A') ? 'Institutional acceptance at the 9:30 open confirms directional intent. ' : '')
+      + 'Risk is manageable. Respect your stop and trade with structure.';
+  } else {
+    reason = 'Conditions at 10 AM carry elevated uncertainty. '
+      + (pricingLabel==='FULLY PRICED' ? 'News is already priced in — the edge from this catalyst is gone. ' : '')
+      + (openLabel.includes('Reversal') ? 'Price reversed against the news direction — narrative is fading. ' : '')
+      + (confLevel==='Low' ? 'Confidence is low given the event\'s limited market-moving history. ' : '')
+      + 'Best to stand aside and wait for a cleaner setup with clearer structure.';
+  }
   document.getElementById('finalReason').textContent = reason;
 }
 
 function resetForm() {
-  document.getElementById('reportArea').classList.remove('visible');
-  document.getElementById('newsName').value = '';
-  document.getElementById('futuresMove').value = '';
-  document.getElementById('openPrice').value = '';
-  document.getElementById('price10').value = '';
-  document.getElementById('openMove').value = '';
-  document.getElementById('pmHigh').value = '';
-  document.getElementById('pmLow').value = '';
-  document.getElementById('previous').value = '';
-  document.getElementById('forecast').value = '';
-  document.getElementById('actual').value = '';
-  selectedImpact = '';
-  selectedDir = '';
-  ['Red','Orange','Yellow'].forEach(v => document.getElementById('impact-'+v).className = 'impact-btn');
-  ['Up','Down'].forEach(v => document.getElementById('dir-'+v).className = 'dir-btn');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.getElementById('reportSection').classList.remove('visible');
+  ['newsName','releaseTime','previous','forecast','actual',
+   'futuresMove','openPrice','price10','openMove','pmHigh','pmLow']
+    .forEach(id => document.getElementById(id).value = '');
+  selImpact=''; selDir='';
+  ['Red','Orange','Yellow'].forEach(k=>document.getElementById('imp-'+k).className='toggle-btn');
+  ['Up','Down'].forEach(k=>document.getElementById('dir-'+k).className='toggle-btn');
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 
-const today = new Date().toISOString().split('T')[0];
-document.getElementById('date').value = today;
+// Auto-fill date & day
+const today = new Date();
+document.getElementById('date').value = today.toISOString().split('T')[0];
 const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-document.getElementById('day').value = days[new Date().getDay()];
+const dayEl = document.getElementById('day');
+const todayDay = days[today.getDay()];
+for (let i=0; i<dayEl.options.length; i++) {
+  if (dayEl.options[i].value === todayDay) { dayEl.selectedIndex = i; break; }
+}
 </script>
+</body>
+</html>
